@@ -1,0 +1,68 @@
+//@version=5
+indicator(title='Tom DeMark Sequential Heat Map', shorttitle='TD heatmap', overlay=true, timeframe='')
+
+// -------- Inputs --------
+paintBars = input(true, 'Paint Bars')
+showLabels = input(true, 'Show labels')
+allSolid = input(true, 'Paint all labels solid (off = only 9 & 13)')
+
+buy_col = input.color(color.new(#32CD32,0),'Colors',inline='col')
+sell_col = input.color(color.new(#F44336,0),'',inline='col')
+text_col = input.color(color.new(#FFFFFF,0),'',inline='col')
+
+// -------- Bearish trend (blue) color selection --------
+buyColors = array.from(#11e7f2, #11d9f2, #11cbf2, #11aff2, #1193f2, #1176f2, #105df4, #1051f5, #0f44f5, #0c3de0, #0935ca, #062eb4, #02269e )
+currentBuyColor(count) => 
+    array.get(buyColors, count-1)
+
+// -------- Bullish trend (red) color selection --------
+sellColors = array.from(#eef211, #efdc11, #f0c511, #f1af11, #f29811, #f28811, #f27811, #f26811, #f25811, #ea420d, #e12c09, #d81605, #cf0000 )
+currentSellColor(count) => 
+    array.get(sellColors, count-1)
+
+
+// -------- Calculate bearish trend sequence --------
+buySetup = 0
+buySetup := close < close[4] ? buySetup[1] == 13 ? 1 : buySetup[1] + 1 : 0
+
+// -------- Calculate bullish trend sequence --------
+sellSetup = 0
+sellSetup := close > close[4] ? sellSetup[1] == 13 ? 1 : sellSetup[1] + 1 : 0
+
+
+// -------- Paint bars --------
+barColour = buySetup >= 1 ? currentBuyColor(buySetup) : sellSetup >= 1 ? currentSellColor(sellSetup) : na
+barcolor(paintBars ? barColour : na, title='Bar colors (heatmap)')
+
+label_col = buySetup >= 1 ? buy_col : sellSetup >= 1 ? sell_col : na
+transpLabel = allSolid ? label_col : color.new(label_col,100)
+transpLabelText = allSolid ? text_col : label_col
+
+
+// -------- Plot labels --------
+plotshape(showLabels ? buySetup == 7 : na, title='TD buy sequence 7', location=location.belowbar, style=shape.labelup, size=size.tiny, color=transpLabel, text="7", textcolor=transpLabelText)
+plotshape(showLabels ? sellSetup == 7 : na, title='TD sell sequence 7', location=location.abovebar, style=shape.labeldown, size=size.tiny, color=transpLabel, text="7", textcolor=transpLabelText)
+plotshape(showLabels ? buySetup == 8 : na, title='TD buy sequence 8', location=location.belowbar, style=shape.labelup, size=size.tiny, color=transpLabel, text="8", textcolor=transpLabelText)
+plotshape(showLabels ? sellSetup == 8 : na, title='TD sell sequence 8', location=location.abovebar, style=shape.labeldown, size=size.tiny, color=transpLabel, text="8", textcolor=transpLabelText)
+plotshape(showLabels ? buySetup == 9 : na, title='TD buy sequence 9', location=location.belowbar, style=shape.labelup, size=size.tiny, color=label_col, text="Long", textcolor=text_col)
+plotshape(showLabels ? sellSetup == 9 : na, title='TD sell sequence 9', location=location.abovebar, style=shape.labeldown, size=size.tiny, color=label_col, text="Short", textcolor=text_col)
+plotshape(showLabels ? buySetup == 10 : na, title='TD buy sequence 10', location=location.belowbar, style=shape.labelup, size=size.tiny, color=transpLabel, text="10", textcolor=transpLabelText)
+plotshape(showLabels ? sellSetup == 10 : na, title='TD sell sequence 10', location=location.abovebar, style=shape.labeldown, size=size.tiny, color=transpLabel, text="10", textcolor=transpLabelText)
+plotshape(showLabels ? buySetup == 11 : na, title='TD buy sequence 11', location=location.belowbar, style=shape.labelup, size=size.tiny, color=transpLabel, text="11", textcolor=transpLabelText)
+plotshape(showLabels ? sellSetup == 11 : na, title='TD sell sequence 11', location=location.abovebar, style=shape.labeldown, size=size.tiny, color=transpLabel, text="11", textcolor=transpLabelText)
+plotshape(showLabels ? buySetup == 12 : na, title='TD buy sequence 12', location=location.belowbar, style=shape.labelup, size=size.tiny, color=transpLabel, text="12", textcolor=transpLabelText)
+plotshape(showLabels ? sellSetup == 12 : na, title='TD sell sequence 12', location=location.abovebar, style=shape.labeldown, size=size.tiny, color=transpLabel, text="12", textcolor=transpLabelText)
+plotshape(showLabels ? buySetup == 13 : na, title='TD buy sequence 13', location=location.belowbar, style=shape.labelup, size=size.tiny, color=label_col, text="Long", textcolor=text_col)
+plotshape(showLabels ? sellSetup == 13 : na, title='TD sell sequence 13', location=location.abovebar, style=shape.labeldown, size=size.tiny, color=label_col, text="Short", textcolor=text_col)
+
+
+// -------- Alerts  --------
+alertcondition(buySetup == 7, title='Start of BUY zone (TD = 7)', message='{{ticker}} start of BUY zone. TD sequence = 7 on {{interval}} timeframe.')
+alertcondition(sellSetup == 7, title='Start of SELL zone (TD = 7)', message='{{ticker}} start of SELL zone. TD sequence = 7 on {{interval}} timeframe.')
+alertcondition(buySetup == 9, title='BUY alert (TD = 9)', message='{{ticker}} has a TD buy sequence of 9 on {{interval}} timeframe.')
+alertcondition(sellSetup == 9, title='SELL alert (TD = 9)', message='{{ticker}} has a TD sell sequence of 9 on {{interval}} timeframe.')
+alertcondition(buySetup == 13, title='BUY alert (TD = 13)', message='{{ticker}} has a TD buy sequence of 13 on {{interval}} timeframe.')
+alertcondition(sellSetup == 13, title='SELL alert (TD = 13)', message='{{ticker}} has a TD sell sequence of 13 on {{interval}} timeframe.')
+alertcondition(buySetup >= 7 or sellSetup >= 7, title='ANY alert "buy and sell" (TD 7 - 13)  ', message='{{ticker}} has a TD sequence >= 7 on {{interval}} timeframe.')
+alertcondition(buySetup == 9 or sellSetup == 9, title='ANY alert "buy and sell" (TD = 9)  ', message='{{ticker}} has a TD sequence >= 9 on {{interval}} timeframe.')
+alertcondition(buySetup == 13 or sellSetup == 13, title='ANY alert "buy and sell" (TD = 13)  ', message='{{ticker}} has a TD sequence = 13 on {{interval}} timeframe.')
